@@ -1,0 +1,14 @@
+#/bin/sh
+#cvt 1280 1024 60 | grep Mode 
+echo "Setting up resolution on DELL external VGA"
+#xrandr --newmode "1280x1024_60"  109.00  1280 1368 1496 1712  1024 1027 1034 1063 -hsync +vsync
+#xrandr --addmode VGA1 1280x1024_60
+#xrandr -s 1280x1024_60
+
+#xrandr --newmode "1280x768_60"  79.50  1280 1344 1472 1664  768 771 781 798 -hsync +vsync
+#xrandr --addmode VGA1 1280x768_60
+#xrandr -s 1280x768_60
+
+xrandr --newmode "1280x800_60"  83.50  1280 1352 1480 1680  800 803 809 831 -hsync +vsync
+xrandr --addmode VGA1 1280x800_60
+xrandr -s 1280x800_60
