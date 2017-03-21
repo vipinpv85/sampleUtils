@@ -1,0 +1,294 @@
+#! /bin/bash
+
+# clear the screen
+clear
+
+unset tecreset os architecture kernelrelease internalip externalip nameserver loadaverage
+
+systemName=$(dmidecode -s system-product-name)
+echo -e '\E[32m'"System Name: "$systemName
+isguest=$(ls -1 /dev/disk/by-id/ | grep QEMU | wc -l)
+if [ $isguest -eq 0 ]; then
+        isguest="No"
+else
+        isguest="Yes"
+fi
+echo -e '\E[32m'"Is Qemu Guest OS :" $isguest
+
+
+# Define Variable tecreset
+tecreset=$(tput sgr0)
+
+# Check if connected to Internet or not
+#ping -c 1 google.com &> /dev/null && echo -e '\E[32m'"Internet: $tecreset Connected" || echo -e '\E[32m'"Internet: $tecreset Disconnected"
+
+# Check OS Type
+os=$(uname -o)
+echo -e '\E[32m'"Operating System Type :" $tecreset $os
+
+# Check OS Release Version and Name
+cat /etc/os-release | grep 'NAME\|VERSION' | grep -v 'VERSION_ID' | grep -v 'PRETTY_NAME' > /tmp/osrelease
+echo -n -e '\E[32m'"OS Name :" $tecreset  && cat /tmp/osrelease | grep -v "VERSION" | cut -f2 -d\"
+echo -n -e '\E[32m'"OS Version :" $tecreset && cat /tmp/osrelease | grep -v "NAME" | cut -f2 -d\"
+
+# Check Architecture
+architecture=$(uname -m)
+echo -e '\E[32m'"Architecture :" $tecreset $architecture
+
+# Check Kernel Release
+kernelrelease=$(uname -r)
+echo -e '\E[32m'"Kernel Release :" $tecreset $kernelrelease
+
+# Check hostname
+echo -e '\E[32m'"Hostname :" $tecreset $HOSTNAME
+
+# Check Internal IP
+internalip=$(hostname -I)
+echo -e '\E[32m'"Internal IP :" $tecreset $internalip
+
+# Check External IP
+#externalip=$(curl -s ipecho.net/plain;echo)
+#echo -e '\E[32m'"External IP : $tecreset "$externalip
+
+# Check DNS
+nameservers=$(cat /etc/resolv.conf | sed '1 d' | awk '{print $2}')
+echo -e '\E[32m'"Name Servers :" $tecreset $nameservers 
+
+# Check Logged In Users
+who>/tmp/who
+echo -e '\E[32m'"Logged In users :" $tecreset && cat /tmp/who 
+
+# Check RAM and SWAP Usages
+free -h | grep -v + > /tmp/ramcache
+echo -e '\E[32m'"Ram Usages :" $tecreset
+cat /tmp/ramcache | grep -v "Swap"
+echo -e '\E[32m'"Swap Usages :" $tecreset
+cat /tmp/ramcache | grep -v "Mem"
+
+# Check Disk Usages
+df -h| grep 'Filesystem\|/dev/sda*' > /tmp/diskusage
+echo -e '\E[32m'"Disk Usages :" $tecreset 
+cat /tmp/diskusage
+
+# Check Load Average
+loadaverage=$(top -n 1 -b | grep "load average:" | awk '{print $10 $11 $12}')
+echo -e '\E[32m'"Load Average :" $tecreset $loadaverage
+
+# Check System Uptime
+tecuptime=$(uptime | awk '{print $3,$4}' | cut -f1 -d,)
+echo -e '\E[32m'"System Uptime Days/(HH:MM) :" $tecreset $tecuptime
+echo -e '\E[30m' "--------------------------"
+
+# Check IPMI modules loaded
+ipmiModulesLoaded=$(lsmod | grep ipmi)
+if [ $ipmiModulesLoaded -eq ""]; then
+	ipmiModulesLoaded="None"
+fi
+echo -e '\E[34m'"IPMI Modules :" $ipmiModulesLoaded
+
+#IPv4 Forwarding status 
+ipv4Fwd=$(cat /proc/sys/net/ipv4/ip_forward)
+echo -e '\E[34m'"IPv4 Forwarding :" $ipv4Fwd
+
+#IRQ status
+irqStatus=$(systemctl status irqbalance.service | grep inactive);
+if [ "$irqStatus" == "" ]; then
+	irqStatus="Alive"
+else
+	irqStatus="Dead"
+fi
+echo -e '\E[34m'"IRQ Status :"$irqStatus
+
+#Firewall status
+firewallStatus=$(systemctl status firewalld.service | grep inactive);
+if [ "$firewallStatus" == "" ]; then
+	firewallStatus="Alive"
+else
+	firewallStatus="Dead"
+fi
+echo -e '\E[34m'"Firewall Status :" $firewallStatus
+
+#Iptables status
+iptableStatus=$(systemctl status iptables.service | grep inactive);
+if [ "$iptableStatus" == "" ]; then
+	iptableStatus="Alive"
+else
+	iptableStatus="Dead"
+fi
+echo -e '\E[34m'"iptables Status :" $iptableStatus
+
+if [ -f /etc/selinux/config ]; then
+	selinuState=$(cat /etc/selinux/config)
+	echo -e 'E\[34m'"SELINUX :"$selinuState
+fi
+
+# ASLR state
+aslrStatus=$(cat /proc/sys/kernel/randomize_va_space)
+echo -e '\E[34m'"ASLR :" $aslrStatus
+
+# System Nodes
+nodeCount=$(ls  /sys/devices/system/node/ | grep node* | wc -l)
+echo -e '\E[35m'"Node Count :" $nodeCount
+
+# Bridge Show
+bridgeShow=$(brctl show)
+echo -e '\E[35m'"Bridge Show :" $bridgeShow
+
+#Huge page Count
+hugepageSize=$(ls /sys/devices/system/node/node0/hugepages/hugepages-* | grep hugepages-)
+hugepageCount=$(cat /sys/devices/system/node/node0/hugepages/hugepages-*/nr_hugepages)
+echo -e '\E[35m'"Huge Page details Nodes : " 
+echo $hugepageSize 
+echo $hugepageCount
+
+#CPU map
+cpumapCount=$(ls /sys/devices/system/node/node*/cpumap)
+cpumapValue=$(cat /sys/devices/system/node/node*/cpumap)
+echo -e '\E[35m'"CPU MAP :"
+echo $cpumapCount
+echo $cpumapValue
+
+#lscpi for NIC
+lspciDataIntel=$(lspci -nn | grep -i 'ethernet\|network' | grep -i intel)
+lspciDataRedhat=$(lspci -nn | grep -i 'ethernet\|network' | grep -i red)
+lspciDataOthers=$(lspci -nn | grep -i 'ethernet\|network' | egrep -vi 'red|intel')
+
+echo -e '\E[35m'"LSPCI NIC Intel :"  $lspciDataIntel
+echo -e '\E[35m'"LSPCI NIC Red Hat :"  $lspciDataRedhat
+echo -e '\E[35m'"LSPCI NIC Others :"  $lspciDataOthers
+
+# VM statistics update interval - 10
+vmstatinterval=$(cat /proc/sys/vm/stat_interval)
+echo -e '\E[35m'"VM statistics update interval (10):" $vmstatinterval
+
+# upper bound on the number of tasks that are checked - 1
+hungtaskCheck=$(cat  /proc/sys/kernel/hung_task_check_count)
+echo -e '\E[35m'"Upper bound on the number of tasks checked (1):" $hungtaskCheck
+echo -e '\E[30m' "--------------------------"
+
+# soft lockup warnings
+#softlockWarn=$(cat /proc/sys/kernel/softlockup_thresh)
+#echo -e '\E[35m'"Soft Lock Up warn (-1):" $softlockWarn
+
+echo -e '\E[36m'" -- Current Logins --"
+w
+
+echo -e '\E[36m'" -- Last Logins --"
+last -a | head -5
+
+echo -e '\E[38m'" -- Utilization and most expensive processes --"
+top -b |head -3
+echo
+top -b |head -10 |tail -4
+echo -e '\E[30m' "--------------------------"
+
+echo
+echo -e '\E[35m'" -- VM stat --"
+vmstat -adw 1 1
+echo -e '\E[35m'" -- NET DEV --"
+cat /proc/net/dev
+echo -e '\E[30m' "--------------------------"
+
+echo
+echo -e '\E[38m'" --- HUGE info ---"
+grep -R '' /sys/kernel/mm/hugepages/ /proc/sys/vm/*huge*
+echo -e '\E[38m'" --- HUGE Mount ---"
+mount | grep -i huge
+echo -e '\E[32m'" --- Transparent Huge Page (never) --- "
+cat /sys/kernel/mm/transparent_hugepage/enabled
+echo -e '\E[30m' "--------------------------"
+
+if [ "$1" == "v" ]; then
+	echo
+	echo -e '\E[39m'" -- lshw --"
+	lshw -C cpu -C memory -C network
+	echo -e '\E[30m' "--------------------------"
+	
+	echo
+	echo -e '\E[30m'" -- Link Capabilities --"
+	lspci -vvb | egrep 'Eth|LnkCap'
+	echo -e '\E[30m' "--------------------------"
+fi
+
+#IRQ BALANCE
+echo
+echo =e '\E[32m'" -- IRQ Balance INFO --"
+cat /etc/default/irqbalance
+
+if [ "$isguest" == "No" ]; then
+	echo
+	echo -e '\E[30m'".......... Details from Host!!"
+
+	#cat /sys/devices/system/cpu/cpu*/online	
+	
+	kernelCmdLine=$(cat /proc/cmdline)
+	echo -e '\E[31m'"Kernel CMD Line :" $kernelCmdLine
+
+	echo
+	qemuVersion=$(kvm --version)
+	echo -e '\E[31m'"Qemu Version :" $qemuVersion
+
+	ovsVersion=$(ovs-vsctl -V)
+	echo -e '\E[31m'"OVS version :" $ovsVersion
+
+	gccVersion=$(gcc --version)
+	echo -e '\E[31m'"GCC version :" $gccVersion
+
+	echo
+	echo -e '\E[31m'" -- qemu task --"
+	ps -aef | grep qemu | grep -v grep
+
+	echo 
+	echo -e '\E[33m'" -- VSCTL SHOW -- "	
+	ovs-vsctl show
+
+	echo
+	echo -e '\E[30m'" --- VIRSH Nodeinfo ---"
+	virsh nodeinfo
+
+	echo -e '\E[30m'" --- VIRSH LIST ---"
+	virsh list --all
+
+	virshDevices=$(virsh list --all  | awk {'print $1'} | grep [0-9])
+	for dev in $virshDevices; do
+		virsh dominfo $dev
+		if [ "$1" == "v" ]; then
+			#virsh dumpxml $dev
+			virsh vcpuinfo $dev
+		fi
+	done
+	
+	if [ "$1" == "v" ]; then
+		virsh domstats
+	fi
+
+	if [ "$1" == "v" ]; then
+		# CPU freq scaler
+		echo -e '\E[31m'"CPU Freq Scaler:"
+		cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+
+		# CPU Freq
+		echo -e '\E[31m'"CPU Freq:"
+		grep MHz /proc/cpuinfo
+
+		# core and numa
+		echo -e '\E[32m'"Physical Core - NUMA :"
+		egrep "physical id|processor"  /proc/cpuinfo
+	fi
+	
+	echo 
+	# NUMA Blanacing
+	numaBalMode=$(cat /proc/sys/kernel/numa_balancing)
+	echo -e '\E[32m'"Numa Balance Mode :" $numaBalMode
+	
+	echo -e '\E[30m' "--------------------------"
+fi
+
+# Remove Temporary Files
+rm /tmp/osrelease /tmp/who /tmp/ramcache /tmp/diskusage
+
+# Unset Variables
+unset tecreset os architecture kernelrelease internalip externalip nameserver loadaverage
+
+shift $(($OPTIND -1))
+
