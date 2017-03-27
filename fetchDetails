@@ -81,7 +81,7 @@ echo -e '\E[30m' "--------------------------"
 
 # Check IPMI modules loaded
 ipmiModulesLoaded=$(lsmod | grep ipmi)
-if [ $ipmiModulesLoaded -eq ""]; then
+if [ "$ipmiModulesLoaded" == "" ]; then
 	ipmiModulesLoaded="None"
 fi
 echo -e '\E[34m'"IPMI Modules :" $ipmiModulesLoaded
@@ -212,7 +212,7 @@ fi
 
 #IRQ BALANCE
 echo
-echo =e '\E[32m'" -- IRQ Balance INFO --"
+echo -e '\E[32m'" -- IRQ Balance INFO --"
 cat /etc/default/irqbalance
 
 if [ "$isguest" == "No" ]; then
@@ -274,12 +274,49 @@ if [ "$isguest" == "No" ]; then
 		# core and numa
 		echo -e '\E[32m'"Physical Core - NUMA :"
 		egrep "physical id|processor"  /proc/cpuinfo
+
+		# IOMMU device
+		echo -e '\E[32m'"IOMMU devices"
+		find /sys/kernel/iommu_groups/ -type l
 	fi
 	
 	echo 
 	# NUMA Blanacing
 	numaBalMode=$(cat /proc/sys/kernel/numa_balancing)
 	echo -e '\E[32m'"Numa Balance Mode :" $numaBalMode
+
+	if [ "$1" == "v" ]; then
+		echo 
+		echo -e '\E[32m'" --------- DMIDECODE details --------- "
+		
+		echo 
+		echo -e '\E[32m'" --- BIOS --- "
+		dmidecode -t 0 -t 13
+
+		echo 
+		echo -e '\E[32m'" --- SYSTEM --- "
+		dmidecode -t 1 -t 12 -t 15 -t 23 -t 32
+
+		echo 
+		echo -e '\E[32m'" -- Processor Cache -- "
+		dmidecode -t 4 -t 7
+
+		echo 
+		echo -e '\E[32m'" -- MEMORY -- "
+		dmidecode -t 5 -t 6 -t 16 -t 17
+
+		echo 
+		echo -e '\E[32m'" -- baseboard chassis -- "
+		dmidecode -t 2 -t 10 -t 3
+
+		#echo 
+		#echo -e '\E[32m'" -- Connector -- "
+		#dmidecode -t 8 
+
+		echo
+		echo -e '\E[32m'" -- Slot -- "
+		dmidecode -t 9
+	fi
 	
 	echo -e '\E[30m' "--------------------------"
 fi
