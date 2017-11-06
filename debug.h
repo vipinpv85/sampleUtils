@@ -5,6 +5,10 @@
 #include <errno.h>
 #include <string.h>
 
+#define compiler_barrier()  __asm volatile("" 		::: "memory")   /*Compiler memory barrier*/
+#define compiler_wmb()   	  __asm volatile("sfence" ::: "memory") /*Write memory barrier*/
+#define hw_mb()   			    __asm volatile("mfence" ::: "memory") /*Full read/write memory barrier. */
+
 #ifdef NDEBUG
 #define debug(M, ...)
 #else
