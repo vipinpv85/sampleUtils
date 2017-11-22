@@ -1,0 +1,10 @@
+"""
+if (pthread_getname_np(pid, name) == 0)
+if (pthread_getattr_np (pid, &attr) == 0) {
+	if (pthread_attr_getguardsize(&attr, &stack_size) == 0)
+		if (pthread_attr_getstack(&attr, &stack_addr, &stack_size) == 0)
+			if (pthread_attr_getstack(&attr, &stack_addr, &stacksize) == 0)
+				;
+	pthread_attr_destroy(&attr);
+}
+"""
