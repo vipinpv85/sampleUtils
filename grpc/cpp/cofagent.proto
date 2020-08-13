@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+//option java_multiple_files = true;
+//option java_package = "io.grpc.examples.cofagent";
+//option java_outer_classname = "HelloWorldProto";
+//option objc_class_prefix = "HLW";
+
+package cofagent;
+
+// The greeting service definition.
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+service Flow {
+  rpc GetFlow (FlowRequest) returns (FlowReply) {}
+  rpc SetFlow (FlowUpdate) returns (FlowRet) {}
+}
+
+message FlowRequest {
+  string key = 1;
+package cofagent;
+
+// The greeting service definition.
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+service Flow {
+  rpc GetFlow (FlowRequest) returns (FlowReply) {}
+  rpc SetFlow (FlowUpdate) returns (FlowRet) {}
+}
+
+message FlowRequest {
+  string key = 1;
+}
+
+message FlowReply {
+  string value = 1;
+}
+
+message FlowUpdate {
+  string key = 1;
+}
+
+message FlowRet {
+  string value = 1;
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
